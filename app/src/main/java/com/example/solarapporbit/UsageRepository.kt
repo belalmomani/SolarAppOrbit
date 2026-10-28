@@ -19,14 +19,15 @@ class UsageRepository(private val context: Context) {
 
     fun hasUsageAccess(): Boolean {
         val ops = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val uid = Process.myUid()
-        val pkg = context.packageName
-        val mode: Int
-        if (Build.VERSION.SDK_INT >= 29) {
-            mode = ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, uid, pkg)
+        val mode = if (Build.VERSION.SDK_INT >= 29) {
+            ops.unsafeCheckOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
+            )
         } else {
             @Suppress("DEPRECATION")
-            mode = ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, uid, pkg)
+            ops.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
+            )
         }
         return mode == AppOpsManager.MODE_ALLOWED
     }
