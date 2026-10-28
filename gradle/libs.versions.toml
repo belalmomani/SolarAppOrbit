@@ -1,7 +1,7 @@
 [versions]
 # متوافق مع Gradle 8.7 (الإصدار الذي تستخدمه بيئة البناء لديك)
 agp = "8.6.1"
-kotlin = "2.0.21"
+kotlin = "2.2.20"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
