@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.example.solarapporbit"
-    compileSdk = 35
+    compileSdk = 36 // مطلوب من Start.io SDK 5.4.0
 
     defaultConfig {
         applicationId = "com.example.solarapporbit"
         minSdk = 26
         targetSdk = 35 // راجع متطلبات Google Play الحالية للاستهداف قبل النشر
         versionCode = 1
-        versionName = "0.3.1"
+        versionName = "0.3.2"
     }
 
     buildTypes {
@@ -27,6 +27,6 @@ android {
 }
 
 dependencies {
-    // Start.io SDK: الإصدار بحسب توثيق Start.io (5.+)؛ بعد أول بناء ناجح ثبّت الرقم الفعلي لضمان ثبات النتائج
-    implementation("com.startapp:inapp-sdk:5.+")
+    // Start.io SDK: الإصدار 5.4.0 هو الذي حلّه البناء فعليًا (يتطلب compileSdk 36)
+    implementation("com.startapp:inapp-sdk:5.4.0")
 }
