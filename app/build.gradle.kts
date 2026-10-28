@@ -12,7 +12,7 @@ android {
         minSdk = 26
         targetSdk = 36 // راجع متطلبات Google Play الحالية للاستهداف قبل النشر
         versionCode = 1
-        versionName = "0.2.0"
+        versionName = "0.3.0"
     }
 
     buildTypes {
