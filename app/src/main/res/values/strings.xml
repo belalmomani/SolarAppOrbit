@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">كوكب التطبيقات</string>
+    <string name="notif_channel">النافذة العائمة</string>
+    <string name="notif_title">كوكب التطبيقات قيد التشغيل</string>
+    <string name="overlay_why">إذن الظهور فوق التطبيقات: لازم لعرض النظام الشمسي كنافذة عائمة شفافة فوق التطبيقات.</string>
+    <string name="usage_why">إذن إحصاءات الاستخدام: لازم لمعرفة التطبيقات الأكثر استخدامًا وترتيبها بحسب وقت الاستخدام. التطبيق لا يرسل هذه البيانات إلى أي خادم.</string>
+    <string name="overlay_status">الظهور فوق التطبيقات: %1$s</string>
+    <string name="usage_status">إحصاءات الاستخدام: %1$s</string>
+    <string name="status_granted">ممنوح</string>
+    <string name="status_missing">غير ممنوح</string>
+    <string name="grant_overlay">منح إذن الظهور فوق التطبيقات</string>
+    <string name="grant_usage">منح إذن إحصاءات الاستخدام</string>
+    <string name="start_overlay">تشغيل النافذة العائمة</string>
+    <string name="stop_overlay">إيقاف النافذة العائمة</string>
+    <string name="need_overlay">امنح إذن الظهور فوق التطبيقات أولًا.</string>
+    <string name="usage_required">لا يمكن عرض النظام الشمسي بدون إذن إحصاءات الاستخدام. امنح الإذن من الإعدادات ليتمكن التطبيق من ترتيب تطبيقاتك بحسب وقت استخدامها.</string>
+    <string name="usage_revoked">أُلغي إذن إحصاءات الاستخدام، فتوقفت النافذة العائمة.</string>
+    <string name="no_usage_data">لا توجد بيانات استخدام بعد</string>
+</resources>
