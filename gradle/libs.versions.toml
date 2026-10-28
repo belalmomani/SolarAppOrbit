@@ -1,6 +1,8 @@
 [versions]
-# AGP 9.0.1: يتطلب Gradle 9.1.0+ و JDK 17، ويدعم حتى API 36.1 (حسب توثيق Android)
-agp = "9.0.1"
+# متوافق مع Gradle 8.7 (الإصدار الذي تستخدمه بيئة البناء لديك)
+agp = "8.6.1"
+kotlin = "2.0.21"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
