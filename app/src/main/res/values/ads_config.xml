@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      معرّف تطبيق Start.io.
+      القيمة الحالية هي معرّف الاختبار التجريبي المذكور في مشروع Start.io الرسمي (للاختبار فقط).
+      استبدلها بمعرّفك الحقيقي من portal.start.io قبل النشر.
+      في نسخة release لا تعمل الإعلانات إطلاقًا ما دام المعرّف هو معرّف الاختبار.
+    -->
+    <string name="startio_app_id" translatable="false">205489527</string>
+</resources>

@@ -16,6 +16,7 @@ import android.widget.Toast
 class MainActivity : Activity() {
 
     private lateinit var repo: UsageRepository
+    private lateinit var ads: InterstitialController
     private lateinit var overlayStatus: TextView
     private lateinit var usageStatus: TextView
     private lateinit var usageError: TextView
@@ -25,6 +26,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         repo = UsageRepository(this)
+        ads = InterstitialController(this)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -72,6 +74,12 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         updateStatus()
+        ads.preload()
+    }
+
+    override fun onDestroy() {
+        ads.release()
+        super.onDestroy()
     }
 
     private fun updateStatus() {
@@ -98,6 +106,12 @@ class MainActivity : Activity() {
             Toast.makeText(this, R.string.usage_required, Toast.LENGTH_LONG).show()
             return
         }
-        startForegroundService(Intent(this, OverlayService::class.java))
+        // الإعلان (إن توفر ومسموح) يُعرض هنا داخل التطبيق، ثم تُشغَّل النافذة العائمة بعد إغلاقه
+        val appContext = applicationContext
+        ads.showThen {
+            runCatching {
+                appContext.startForegroundService(Intent(appContext, OverlayService::class.java))
+            }
+        }
     }
 }
