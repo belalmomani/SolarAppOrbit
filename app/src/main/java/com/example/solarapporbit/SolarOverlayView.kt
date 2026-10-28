@@ -38,15 +38,17 @@ class SolarOverlayView(
         fun onZoomIn()
         fun onZoomOut()
         fun onOpenApp(packageName: String)
+        fun onDrag(dx: Int, dy: Int)
     }
 
     private val density = resources.displayMetrics.density
     private fun dp(v: Float) = v * density
 
-    /** ارتفاع شريط الأزرار أسفل الدائرة (بالبكسل). */
-    val bandHeightPx: Int = dp(BAND_DP).roundToInt()
-    private val btnR = dp(17f)
-    private val btnGap = dp(14f)
+    /** لا شريط سفلي: الأزرار صغيرة في الزاوية السفلية داخل النافذة. */
+    val bandHeightPx: Int = 0
+    private val btnR = dp(12f)
+    private val btnGap = dp(6f)
+    private val btnMargin = dp(6f)
 
     private val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
     private val choreographer = Choreographer.getInstance()
@@ -90,7 +92,7 @@ class SolarOverlayView(
     private val glyphFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
     private val glyphStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = dp(2.4f)
+        strokeWidth = dp(1.8f)
         strokeCap = Paint.Cap.ROUND
         color = Color.WHITE
     }
@@ -110,7 +112,7 @@ class SolarOverlayView(
     fun setApps(newApps: List<OrbitApp>) {
         val planets = max(newApps.size - 1, 0)
         if (planets != angles.size) {
-            angles = FloatArray(planets) { i -> i * 2.4f } // توزيع أولي متباعد
+            angles = FloatArray(planets) { i -> i * 2.4f } // 137.5° تقريبًا بين كل كوكب والتالي
         }
         apps = newApps
         rebuildSprites()
@@ -135,12 +137,12 @@ class SolarOverlayView(
         cx = width / 2f
         cy = solarSize / 2f
         maxR = solarSize / 2f * 0.97f
-        sunR = maxR * 0.17f
+        sunR = maxR * 0.19f
         val n = angles.size
         orbitRadius = FloatArray(n) { i ->
-            if (n == 1) maxR * 0.6f else maxR * (0.30f + 0.60f * i / (n - 1))
+            if (n == 1) maxR * 0.6f else maxR * (0.36f + 0.50f * i / (n - 1))
         }
-        planetRadius = FloatArray(n) { i -> maxR * (0.0745f - 0.0015f * i) }
+        planetRadius = FloatArray(n) { i -> maxR * (0.108f - 0.004f * i) }
         glowPaint.shader = RadialGradient(
             cx, cy, sunR * 2.2f,
             intArrayOf(
@@ -248,17 +250,19 @@ class SolarOverlayView(
 
     private fun advance(dt: Float) {
         for (i in angles.indices) {
-            val speed = TWO_PI / (16f + 7f * i) // الأبعد أبطأ
-            angles[i] = (angles[i] + speed * dt) % TWO_PI
+            // السرعة الزاوية واحدة لكل الكواكب: تبقى المسافات بينها ثابتة فلا تتداخل الأيقونات الكبيرة
+            angles[i] = (angles[i] + TWO_PI / PERIOD_S * dt) % TWO_PI
         }
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        wakeButtons()
         updateAnimation()
     }
 
     override fun onDetachedFromWindow() {
+        removeCallbacks(sleepRunnable)
         choreographer.removeFrameCallback(frameCallback)
         frameScheduled = false
         lastFrameNanos = 0L
@@ -271,25 +275,38 @@ class SolarOverlayView(
     private fun planetY(i: Int) = cy + orbitRadius[i] * sin(angles[i])
 
     override fun onDraw(canvas: Canvas) {
-        drawButtons(canvas)
         val sun = sunSprite
         if (sun == null) {
             canvas.drawText(context.getString(R.string.no_usage_data), cx, cy, emptyPaint)
-            return
+        } else {
+            canvas.drawCircle(cx, cy, sunR * 2.2f, glowPaint)
+            for (r in orbitRadius) canvas.drawCircle(cx, cy, r, orbitPaint)
+            canvas.drawBitmap(sun, cx - sun.width / 2f, cy - sun.height / 2f, spritePaint)
+            for (i in planetSprites.indices) {
+                val s = planetSprites[i]
+                canvas.drawBitmap(s, planetX(i) - s.width / 2f, planetY(i) - s.height / 2f, spritePaint)
+            }
         }
-        canvas.drawCircle(cx, cy, sunR * 2.2f, glowPaint)
-        for (r in orbitRadius) canvas.drawCircle(cx, cy, r, orbitPaint)
-        canvas.drawBitmap(sun, cx - sun.width / 2f, cy - sun.height / 2f, spritePaint)
-        for (i in planetSprites.indices) {
-            val s = planetSprites[i]
-            canvas.drawBitmap(s, planetX(i) - s.width / 2f, planetY(i) - s.height / 2f, spritePaint)
-        }
+        drawButtons(canvas) // فوق كل شيء
     }
 
-    private fun buttonCx(index: Int) = width / 2f + (index - 1) * (2 * btnR + btnGap)
-    private fun buttonCy() = height - bandHeightPx / 2f
+    private fun buttonCx(index: Int) =
+        width - btnMargin - btnR - (2 - index) * (2 * btnR + btnGap)
+
+    private fun buttonCy() = height - btnMargin - btnR
+
+    // الأزرار تخفت بعد 3 ثوانٍ من آخر لمس وتعود واضحة عند اللمس
+    private var buttonsAwake = true
+    private val sleepRunnable = Runnable { buttonsAwake = false; invalidate() }
+
+    private fun wakeButtons() {
+        removeCallbacks(sleepRunnable)
+        if (!buttonsAwake) { buttonsAwake = true; invalidate() }
+        postDelayed(sleepRunnable, BUTTONS_AWAKE_MS)
+    }
 
     private fun drawButtons(canvas: Canvas) {
+        val layer = canvas.saveLayerAlpha(0f, 0f, width.toFloat(), height.toFloat(), if (buttonsAwake) 255 else 80)
         val g = btnR * 0.45f
         val by = buttonCy()
         for (b in 0 until 3) {
@@ -316,29 +333,51 @@ class SolarOverlayView(
                 else -> canvas.drawLine(bx - g, by, bx + g, by, glyphStroke) // −
             }
         }
+        canvas.restoreToCount(layer)
     }
 
     // ---------- اللمس ----------
 
     private var downX = 0f
     private var downY = 0f
+    private var lastRawX = 0f
+    private var lastRawY = 0f
+    private var dragging = false
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 downX = event.x
                 downY = event.y
+                lastRawX = event.rawX
+                lastRawY = event.rawY
+                dragging = false
+                wakeButtons()
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (!dragging && hypot(event.x - downX, event.y - downY) > touchSlop) dragging = true
+                if (dragging) { // سحب وإفلات: تحريك النافذة العائمة
+                    val dx = (event.rawX - lastRawX).roundToInt()
+                    val dy = (event.rawY - lastRawY).roundToInt()
+                    if (dx != 0 || dy != 0) {
+                        listener.onDrag(dx, dy)
+                        lastRawX += dx
+                        lastRawY += dy
+                    }
+                }
             }
             MotionEvent.ACTION_UP -> {
-                if (hypot(event.x - downX, event.y - downY) <= touchSlop) handleTap(event.x, event.y)
+                if (!dragging) handleTap(event.x, event.y)
+                dragging = false
             }
+            MotionEvent.ACTION_CANCEL -> dragging = false
         }
         return true
     }
 
     private fun handleTap(x: Float, y: Float) {
         for (b in 0 until 3) {
-            if (hypot(x - buttonCx(b), y - buttonCy()) <= btnR * 1.25f) {
+            if (hypot(x - buttonCx(b), y - buttonCy()) <= max(btnR * 1.6f, dp(20f))) {
                 when (b) {
                     0 -> toggleRotation()
                     1 -> listener.onZoomIn()
@@ -373,7 +412,8 @@ class SolarOverlayView(
     }
 
     companion object {
-        const val BAND_DP = 46f
+        private const val PERIOD_S = 45f
+        private const val BUTTONS_AWAKE_MS = 3000L
         private const val TWO_PI = (2.0 * PI).toFloat()
     }
 }

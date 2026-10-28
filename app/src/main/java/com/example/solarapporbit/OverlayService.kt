@@ -105,7 +105,7 @@ class OverlayService : Service(), SolarOverlayView.Listener {
     private fun addOverlay() {
         val dm = resources.displayMetrics
         minDim = min(dm.widthPixels, dm.heightPixels)
-        baseSide = (minDim * 0.85f).toInt() // حجم ابتدائي ≈ نصف مساحة الشاشة
+        baseSide = (minDim * 0.92f).toInt() // حجم ابتدائي ≈ نصف مساحة الشاشة
 
         val view = SolarOverlayView(this, this)
         val lp = WindowManager.LayoutParams(
@@ -155,6 +155,18 @@ class OverlayService : Service(), SolarOverlayView.Listener {
         runCatching { windowManager.updateViewLayout(view, lp) }
     }
 
+    /** سحب وإفلات: تحريك النافذة مع إبقاء 75% منها على الأقل داخل الشاشة. */
+    override fun onDrag(dx: Int, dy: Int) {
+        val view = overlayView ?: return
+        val lp = params ?: return
+        val dm = resources.displayMetrics
+        val limX = maxOf(0, dm.widthPixels / 2 - lp.width / 4)
+        val limY = maxOf(0, dm.heightPixels / 2 - lp.height / 4)
+        lp.x = (lp.x + dx).coerceIn(-limX, limX)
+        lp.y = (lp.y + dy).coerceIn(-limY, limY)
+        runCatching { windowManager.updateViewLayout(view, lp) }
+    }
+
     override fun onOpenApp(packageName: String) {
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         if (intent == null) { // حُذف التطبيق أو لم يعد قابلًا للتشغيل
@@ -181,7 +193,7 @@ class OverlayService : Service(), SolarOverlayView.Listener {
         private const val CHANNEL_ID = "overlay"
         private const val MAX_APPS = 6          // الشمس + 5 كواكب
         private const val REFRESH_MS = 5 * 60 * 1000L
-        private const val SCALE_STEP = 0.1f
+        private const val SCALE_STEP = 0.15f
         private const val MIN_SCALE = 0.5f
     }
 }
